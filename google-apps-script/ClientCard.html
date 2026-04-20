@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Карточка клиента — VikingTech</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand: #1a3a6e;
+      --accent: #e8350e;
+      --green:  #16a34a;
+      --muted:  #6b7280;
+      --radius: 12px;
+    }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f7fa;
+      color: #1c1c1c;
+      min-height: 100vh;
+      padding: 20px 16px 40px;
+    }
+    .logo {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--brand);
+      margin-bottom: 20px;
+    }
+    .logo span { color: var(--accent); }
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .field { margin-bottom: 14px; }
+    .field label { font-size: 0.75rem; color: var(--muted); display: block; margin-bottom: 2px; }
+    .field strong { font-size: 1rem; color: #1c1c1c; }
+    .row-num { text-align: right; font-size: 0.75rem; color: var(--muted); margin-bottom: 8px; }
+    h3 { font-size: 1rem; font-weight: 700; color: var(--brand); margin-bottom: 12px; }
+    .status-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 13px 16px;
+      margin-bottom: 10px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      background: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .status-btn:hover  { border-color: var(--brand); background: #f0f4ff; }
+    .status-btn.active { border-color: var(--green);  background: #f0fdf4; color: var(--green); }
+    .status-btn .icon  { font-size: 1.2rem; }
+    .btn-confirm {
+      width: 100%;
+      padding: 14px;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: opacity .2s;
+    }
+    .btn-confirm:hover     { opacity: .88; }
+    .btn-confirm:disabled  { opacity: .5; cursor: not-allowed; }
+    .success-screen { display: none; text-align: center; padding: 32px 0; }
+    .success-screen .icon  { font-size: 3.5rem; margin-bottom: 12px; }
+    .success-screen h2     { font-size: 1.3rem; color: var(--green); margin-bottom: 8px; }
+    .success-screen p      { font-size: 0.9rem; color: var(--muted); }
+    .error-screen { text-align: center; padding: 40px 0; }
+    .error-screen .icon { font-size: 3rem; margin-bottom: 12px; }
+    .error-screen h2    { color: var(--accent); margin-bottom: 8px; }
+    .error-screen p     { font-size: 0.9rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<div class="logo">Viking<span>Tech</span></div>
+
+<? if (data.error) { ?>
+
+  <div class="card error-screen">
+    <div class="icon">⚠️</div>
+    <h2>Ошибка</h2>
+    <p><?= data.error ?></p>
+  </div>
+
+<? } else { ?>
+
+  <div class="row-num">Строка #<?= data.row ?></div>
+
+  <div class="card">
+    <div class="card-title">📋 Данные клиента</div>
+    <div class="field">
+      <label>Имя</label>
+      <strong><?= data.name || '—' ?></strong>
+    </div>
+    <div class="field">
+      <label>Телефон</label>
+      <strong><a href="tel:<?= data.phone ?>" style="color:inherit"><?= data.phone || '—' ?></a></strong>
+    </div>
+    <div class="field">
+      <label>Город</label>
+      <strong><?= data.city || '—' ?></strong>
+    </div>
+    <div class="field">
+      <label>Тип техники</label>
+      <strong><?= data.category || '—' ?></strong>
+    </div>
+    <? if (data.comment) { ?>
+    <div class="field">
+      <label>Комментарий клиента</label>
+      <strong><?= data.comment ?></strong>
+    </div>
+    <? } ?>
+    <div class="field">
+      <label>Текущий статус</label>
+      <strong><?= data.status ?></strong>
+    </div>
+    <div class="field">
+      <label>Дата заявки</label>
+      <strong><?= data.timestamp || '—' ?></strong>
+    </div>
+    <div class="field">
+      <label>Заказ №</label>
+      <strong><?= data.orderNum || '1' ?></strong>
+    </div>
+  </div>
+
+  <? if (data.discount && data.discount !== '—') { ?>
+  <div class="card" style="border: 2px solid #16a34a; background: #f0fdf4;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:2rem;">🎁</span>
+      <div>
+        <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#16a34a; margin-bottom:4px;">Программа лояльности</div>
+        <div style="font-size:1.1rem; font-weight:800; color:#14532d;">Скидка <?= data.discount ?> на этот заказ</div>
+        <div style="font-size:0.82rem; color:#166534; margin-top:2px;">Клиент заказывает у нас повторно — сообщите о скидке!</div>
+      </div>
+    </div>
+  </div>
+  <? } ?>
+
+  <? if (data.recs && data.recs.length > 0) { ?>
+  <div class="card" style="border: 2px solid #1a3a6e; background: #f0f4ff;">
+    <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#1a3a6e; margin-bottom:10px;">💡 Рекомендуемые товары</div>
+    <div style="font-size:0.82rem; color:#374151; margin-bottom:8px;">На основе истории покупок этого клиента:</div>
+    <? for (var i = 0; i < data.recs.length; i++) { ?>
+    <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #e0e7ff;">
+      <span style="color:#1a3a6e; font-weight:700;">→</span>
+      <span style="font-size:0.92rem; font-weight:600; color:#1e3a5f;"><?= data.recs[i] ?></span>
+    </div>
+    <? } ?>
+    <div style="font-size:0.78rem; color:#6b7280; margin-top:8px;">Предложите клиенту при звонке — повышает средний чек</div>
+  </div>
+  <? } ?>
+
+  <div class="card" id="statusPanel">
+    <h3>Изменить статус</h3>
+    <button class="status-btn" onclick="selectStatus(this, 'В работе')">
+      <span class="icon">🔄</span> В работе
+    </button>
+    <button class="status-btn" onclick="selectStatus(this, 'Перезвонить')">
+      <span class="icon">📞</span> Перезвонить
+    </button>
+    <button class="status-btn" onclick="selectStatus(this, 'Сделка закрыта')">
+      <span class="icon">✅</span> Сделка закрыта
+    </button>
+    <button class="status-btn" onclick="selectStatus(this, 'Отказ')">
+      <span class="icon">❌</span> Отказ
+    </button>
+    <button class="btn-confirm" id="confirmBtn" disabled onclick="confirmStatus()">
+      Сохранить статус
+    </button>
+  </div>
+
+  <div class="card success-screen" id="successScreen">
+    <div class="icon">✅</div>
+    <h2>Статус обновлён!</h2>
+    <p id="successText"></p>
+  </div>
+
+<? } ?>
+
+<script type="application/json" id="cfg"><?!= JSON.stringify({row: data.row}) ?></script>
+
+<script>
+  var _cfg           = JSON.parse(document.getElementById('cfg').textContent);
+  var ROW            = _cfg.row;
+  var selectedStatus = null;
+
+  function selectStatus(btn, status) {
+    document.querySelectorAll('.status-btn').forEach(function(b) {
+      b.classList.remove('active');
+    });
+    btn.classList.add('active');
+    selectedStatus = status;
+    document.getElementById('confirmBtn').disabled = false;
+  }
+
+  function confirmStatus() {
+    if (!selectedStatus) return;
+    var btn = document.getElementById('confirmBtn');
+    btn.disabled = true;
+    btn.textContent = 'Сохраняем...';
+
+    // google.script.run вызывает функцию напрямую в Apps Script —
+    // не через fetch/HTTP, поэтому нет проблем с редиректами Google
+    google.script.run
+      .withSuccessHandler(function() {
+        document.getElementById('statusPanel').style.display = 'none';
+        var s = document.getElementById('successScreen');
+        s.style.display = 'block';
+        document.getElementById('successText').textContent =
+          'Клиент переведён в статус «' + selectedStatus + '»';
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        btn.textContent = 'Сохранить статус';
+        alert('Ошибка: ' + (err.message || err));
+      })
+      .updateStatusFromCard(ROW, selectedStatus);
+  }
+</script>
+
+</body>
+</html>

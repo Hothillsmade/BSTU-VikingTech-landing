@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VikingTech — QR-генератор заявок</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand:  #1a3a6e;
+      --accent: #e8350e;
+      --light:  #f5f7fa;
+      --muted:  #6b7280;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--light);
+      color: #1c1c1c;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .logo { font-size: 1.6rem; font-weight: 800; color: var(--brand); }
+    .logo span { color: var(--accent); }
+    header p { color: var(--muted); font-size: 0.95rem; margin-top: 6px; }
+
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.07);
+      margin-bottom: 24px;
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--brand);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: #1c1c1c;
+      background: #fafafa;
+      outline: none;
+      transition: border-color .2s;
+      margin-bottom: 16px;
+    }
+    input:focus, select:focus { border-color: var(--brand); background: #fff; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: .88; }
+    .btn-accent { background: var(--accent); }
+
+    /* Результат */
+    #result { display: none; text-align: center; }
+
+    #qrcode {
+      display: inline-block;
+      padding: 16px;
+      background: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: var(--radius);
+      margin: 16px 0;
+    }
+    #qrcode img { display: block; }
+
+    .client-summary {
+      background: var(--light);
+      border-radius: 8px;
+      padding: 16px 20px;
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    .client-summary p { font-size: 0.88rem; color: var(--muted); margin-bottom: 4px; }
+    .client-summary strong { color: #1c1c1c; }
+
+    .actions { display: flex; gap: 12px; }
+    .actions button { flex: 1; }
+
+    .hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+
+    /* Инструкция */
+    .steps { counter-reset: step; }
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .step-num {
+      counter-increment: step;
+      min-width: 32px; height: 32px;
+      background: var(--brand);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+    .step-text strong { display: block; font-size: 0.92rem; margin-bottom: 2px; }
+    .step-text span { font-size: 0.83rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="logo">Viking<span>Tech</span></div>
+    <p>Генератор QR-кодов для заявок — внутренний инструмент</p>
+  </header>
+
+  <!-- Форма генерации -->
+  <div class="card">
+    <h2>📋 Данные заявки</h2>
+
+    <div class="row">
+      <div>
+        <label>Номер строки в таблице *</label>
+        <input type="number" id="rowNum" placeholder="например: 5" min="2" />
+      </div>
+      <div>
+        <label>Статус по умолчанию</label>
+        <select id="defaultStatus">
+          <option value="">— любой —</option>
+          <option value="В работе">В работе</option>
+          <option value="Перезвонить">Перезвонить</option>
+          <option value="Сделка закрыта">Сделка закрыта</option>
+        </select>
+      </div>
+    </div>
+
+    <label>Имя клиента (для подписи на QR)</label>
+    <input type="text" id="clientName" placeholder="Иван Иванов" />
+
+    <button class="btn" onclick="generateQR()">Сгенерировать QR-код →</button>
+  </div>
+
+  <!-- Результат -->
+  <div class="card" id="result">
+    <h2>✅ QR-код готов</h2>
+
+    <div class="client-summary" id="clientSummary"></div>
+
+    <div id="qrcode"></div>
+
+    <p class="hint">
+      Сканируйте телефоном — откроется карточка клиента<br>
+      со статусами для менеджера
+    </p>
+
+    <div class="actions">
+      <button class="btn btn-accent" onclick="printQR()">🖨️ Распечатать</button>
+      <button class="btn" onclick="downloadQR()">⬇️ Скачать PNG</button>
+    </div>
+  </div>
+
+  <!-- Инструкция -->
+  <div class="card">
+    <h2>📖 Как пользоваться</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">
+          <strong>Найдите номер строки</strong>
+          <span>Откройте Google Таблицу — посмотрите в какой строке находится нужный клиент (например, строка 5)</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">
+          <strong>Введите данные выше</strong>
+          <span>Укажите номер строки и имя клиента для подписи</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">
+          <strong>Распечатайте или сохраните QR</strong>
+          <span>Приложите к физическим документам клиента, отправьте в чат или наклейте на папку</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">
+          <strong>Сканируйте в нужный момент</strong>
+          <span>После встречи, доставки или оплаты — отсканируйте QR и нажмите нужный статус. Таблица обновится автоматически</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Вставить URL задеплоенного Apps Script ──
+  var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwidWvoVzyE0R9JtRBR3Tuai1l9eT28BaKzU9mJ2s95je19MZhMosUH7COhg-_29vs/exec';
+  var SECRET     = 'vikingtech2024';
+
+  var currentQRUrl = '';
+
+  function generateQR() {
+    var row    = document.getElementById('rowNum').value.trim();
+    var name   = document.getElementById('clientName').value.trim();
+    var status = document.getElementById('defaultStatus').value;
+
+    if (!row || row < 2) {
+      alert('Укажите номер строки (минимум 2 — первая строка это заголовки)');
+      return;
+    }
+
+    // Формируем URL, который откроется при сканировании QR
+    var params = new URLSearchParams({
+      action: 'view',
+      row:    row,
+      secret: SECRET
+    });
+    if (status) params.append('status', status);
+
+    currentQRUrl = SCRIPT_URL + '?' + params.toString();
+
+    // Google Charts API для генерации QR-изображения (бесплатно, без ключа)
+    var qrImgUrl = 'https://chart.googleapis.com/chart'
+      + '?chs=240x240'
+      + '&cht=qr'
+      + '&choe=UTF-8'
+      + '&chl=' + encodeURIComponent(currentQRUrl);
+
+    // Отображаем результат
+    var qrDiv = document.getElementById('qrcode');
+    qrDiv.innerHTML = '<img src="' + qrImgUrl + '" width="240" height="240" id="qrImg" />';
+
+    var summary = document.getElementById('clientSummary');
+    summary.innerHTML =
+      '<p>Клиент: <strong>' + (name || 'не указано') + '</strong></p>' +
+      '<p>Строка в таблице: <strong>' + row + '</strong></p>' +
+      '<p>Статус при скане: <strong>' + (status || 'на выбор менеджера') + '</strong></p>';
+
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function printQR() {
+    window.print();
+  }
+
+  function downloadQR() {
+    var img = document.getElementById('qrImg');
+    if (!img) return;
+
+    // Скачиваем через canvas
+    var canvas = document.createElement('canvas');
+    canvas.width  = 240;
+    canvas.height = 240;
+    var ctx = canvas.getContext('2d');
+
+    var tempImg = new Image();
+    tempImg.crossOrigin = 'anonymous';
+    tempImg.onload = function () {
+      ctx.drawImage(tempImg, 0, 0);
+      var link = document.createElement('a');
+      link.download = 'vikingtech-qr-row' + document.getElementById('rowNum').value + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    };
+    tempImg.onerror = function () {
+      // Fallback: открыть изображение в новой вкладке
+      window.open(img.src, '_blank');
+    };
+    tempImg.src = img.src;
+  }
+</script>
+
+</body>
+</html>
